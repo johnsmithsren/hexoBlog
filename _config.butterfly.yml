@@ -1,0 +1,43 @@
+# Navigation bar settings
+menu:
+  首页: / || fas fa-home
+  归档: /archives/ || fas fa-archive
+  标签: /tags/ || fas fa-tags
+  分类: /categories/ || fas fa-folder-open
+  关于: /about/ || fas fa-heart
+
+# Favicon
+favicon: /img/favicon.png
+
+# Avatar
+avatar:
+  img: /img/avatar.png
+  effect: false
+
+# 首页文章节选
+index_post_content:
+  method: 3
+  length: 500
+
+# 社交链接
+social:
+  Github: https://github.com/johnsmithsren || fab fa-github
+  E-Mail: mailto:your-email@example.com || fas fa-envelope
+
+# 文章版权
+post_copyright:
+  enable: true
+  license: CC BY-NC-SA 4.0
+  license_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+# 代码高亮主题
+highlight_theme: mac
+
+# 页面加载动画
+preloader: true
+
+# 深色模式
+darkmode:
+  enable: true
+  button: true
+  autoChangeMode: false
