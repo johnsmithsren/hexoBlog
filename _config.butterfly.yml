@@ -36,8 +36,173 @@ highlight_theme: mac
 # 页面加载动画
 preloader: true
 
+# 侧边栏设置
+aside:
+  enable: true
+  hide: false
+  button: true
+  mobile: true
+  position: right
+  card_author:
+    enable: true
+    description: '生活就像青春恋爱物语，总是充满了意外'
+    button:
+      enable: true
+      icon: fab fa-github
+      text: Follow Me
+      link: https://github.com/johnsmithsren
+
+# 社交图标设置
+social_icon:
+  fab fa-github: https://github.com/johnsmithsren || Github
+  fas fa-envelope: mailto:your-email@example.com || Email
+
+# 文章页面设置
+post_meta:
+  page:
+    date_type: both
+    categories: true
+    tags: true
+    label: true
+
+# 文章版权
+post_copyright:
+  enable: true
+  decode: false
+  license: CC BY-NC-SA 4.0
+  license_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+# 页脚设置
+footer:
+  owner:
+    enable: true
+    since: 2020
+
 # 深色模式
 darkmode:
   enable: true
   button: true
   autoChangeMode: false
+
+# CDN 设置
+CDN:
+  # The CDN provider of internal scripts (主题内部 js 的 cdn 配置)
+  # option: local/jsdelivr/unpkg/cdnjs/custom
+  # Dev version cannot choose jsdelivr/unpkg/cdnjs (开发版的主题不能设置为 jsdelivr/unpkg/cdnjs)
+  internal_provider: local
+  # Custom format (自定义格式)
+  # 例如: https://cdn.staticfile.org/${cdnjs_name}/${version}/${min_cdnjs}
+  custom_format: 
+  # 不蒜子计数
+  busuanzi: https://cdn.jsdelivr.net/npm/busuanzi@2.3.0/bsz.pure.mini.min.js
+
+# 访问人数统计
+busuanzi:
+  site_uv: true
+  site_uv_header: <i class="fas fa-user"></i> 访客数
+  site_uv_footer: 人
+  site_pv: true
+  site_pv_header: <i class="fas fa-eye"></i> 总访问量
+  site_pv_footer: 次
+  page_pv: true
+  page_pv_header: <i class="fas fa-file-alt"></i> 阅读数
+  page_pv_footer: 次
+
+# 运行时间统计
+runtimeshow:
+  enable: true
+  publish_date: 5/25/2020 00:00:00  # 网站开始运行时间
+
+# 文章美化
+beautify:
+  enable: true
+  field: post # site/post
+  title-prefix-icon: # '\f0c1'
+  title-prefix-icon-color: # '#F47466'
+
+# 代码块设置
+highlight_theme: mac #  darker / pale night / light / ocean / mac / mac light / false
+highlight_copy: true
+highlight_lang: true
+highlight_shrink: false
+highlight_height_limit: false
+code_word_wrap: false
+
+# 文章卡片动画
+article_sort_animation:
+  enable: true
+  distance: 50
+  duration: 0.8
+
+# 鼠标点击效果
+cursor:
+  enable: true
+  default: default
+  pointer: default
+  text: default
+  color: # "#000"
+
+# 网站动画
+animate:
+  enable: true
+  title_delay: 0 # 主页标题动画延迟
+  subtitle_delay: 0 # 主页副标题动画延迟
+  post_title_delay: 0 # 文章标题动画延迟
+  post_meta_delay: 0 # 文章meta动画延迟
+  post_content_delay: 0 # 文章内容动画延迟
+
+# 页面加载动画
+preloader:
+  enable: true
+  # source
+  # 1. fullpage-loading
+  # 2. pace (progress bar)
+  source: 1
+  # pace theme (see https://codebyzach.github.io/pace/)
+  pace_css_url:
+
+# 侧边栏样式
+aside:
+  enable: true
+  mobile: true
+  position: right
+  display:
+    archive: true
+    tag: true
+    category: true
+  card_author:
+    enable: true
+    description: '生活就像青春恋爱物语，总是充满了意外'
+  card_announcement:
+    enable: true
+    content: 欢迎来到我的博客！
+  card_recent_post:
+    enable: true
+    limit: 5 # 显示最新文章数量
+    sort: date # date or updated
+    sort_order: # Don't modify the setting unless you know how it works
+  card_categories:
+    enable: true
+    limit: 8 # 显示分类数量
+    expand: none # none/true/false
+    sort_order: # Don't modify the setting unless you know how it works
+  card_tags:
+    enable: true
+    limit: 40 # 显示标签数量
+    color: false
+    sort_order: # Don't modify the setting unless you know how it works
+  card_archives:
+    enable: true
+    type: monthly # yearly or monthly
+    format: MMMM YYYY # eg: YYYY年MM月
+    order: -1 # Sort of order. 1, asc for ascending; -1, desc for descending
+    limit: 8 # 显示归档数量
+    sort_order: # Don't modify the setting unless you know how it works
+
+# 页脚设置
+footer:
+  owner:
+    enable: true
+    since: 2020
+  custom_text: 
+  copyright: true # Copyright of theme and framework
