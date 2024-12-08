@@ -6,9 +6,6 @@
 menu:
   首页: / || fas fa-home
   归档: /archives/ || fas fa-archive
-  标签: /tags/ || fas fa-tags
-  分类: /categories/ || fas fa-folder-open
-  关于: /about/ || fas fa-heart
 
 # 网站图标
 favicon: /img/favicon.png
@@ -19,11 +16,12 @@ highlight_copy: true
 highlight_lang: true
 highlight_shrink: false
 highlight_height_limit: 200
-
+default_top_img: /renjmBlog.github.io/images/young.png
+background: /renjmBlog.github.io/images/roam.jpg
 # 社交图标
 social:
   fab fa-github: https://github.com/johnsmithsren || Github
-  fas fa-envelope: mailto:your-email@example.com || Email
+  fas fa-envelope: mailto:rjm1149104294@outlook.com || Email
 
 # 文章版权
 post_copyright:
