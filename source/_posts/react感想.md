@@ -1,93 +1,97 @@
 ---
-title: react感想
+title: React 开发实践与组件设计思考
 date: 2022-04-23 13:31:48
+categories:
+  - 前端开发
+tags:
+  - React
+  - Hooks
+  - 组件设计
+  - 状态管理
 ---
 
-关于react的感想 .就我现在的做的这个对内使用的管理平台的内容来说，单纯的使用 usestate, useeffect,再辅助以少量的useref也就差不多了。
+## 项目实践
 
-用的antd的组件，只需要针对部分做样式简单的调整 .比较关键的问题，就是组件的状态传递，也就是增加组件的复用程度，对于一些组件进行拆分，重组。
+在开发内部管理平台时,主要使用了以下技术栈:
+- React Hooks (useState, useEffect, useRef)
+- Ant Design 组件库
+- MobX 状态管理
 
-以达到复用的情况时候，就碰到了状态传递的问题，对我现在这个简单的项目而言，性能方面的考虑暂时涉及不到。
+## 组件设计经验
 
-最近碰到的问题主要就是关于状态传递的，父组件如何传递状态给子组件，子组件中再嵌套子组件的情况下，内容传递的一致性，同时还要考虑代码的简洁。
+### 状态管理
+对于简单的父子组件通信,使用 props 和 ref 就足够了。但在以下情况需要考虑使用状态管理工具:
+- 组件层级过深
+- 状态需要共享
+- 状态变化复杂
 
-我发现，useref这些对于一层父子组件来说，还是比较直观，可靠的。
+### 组件拆分原则
+1. 功能独立
+2. 复用性高
+3. 维护方便
+4. 职责单一
 
-```javascript
-import React,
-  {
-  forwardRef,
-  useImperativeHandle,
-  useState 
-}
-from "react";
-import {
-  Button,
-  DatePicker,
-  Divider 
-}
-from "antd";
-import {
-  useObserver 
-}
-from "mobx-react";
-import ComponentStore from "store/ComponentStore";
-const {
-  RangePicker 
-}
-= DatePicker;
-import moment from "moment";
-const _ = require("lodash");
-export const RangePickCondition = forwardRef((props,
-  ref) => {
-  const [startTime,
-  setStartTime] = useState();
-const [endTime,
-  setEndTime] = useState();
-const [regTime,
-  setRegTime] = useState();
-const type = _.get(props,
-  "type");
-useImperativeHandle(ref,
-  () => ({
-  startTime: _.toNumber(moment(startTime).format("X")),
-  endTime: _.toNumber(moment(endTime).format("X")),
-  regTime: _.toNumber(moment(regTime).format("X")),
-  }
-));
-return useObserver(() => ( <> {
-  type == "needReg" ? ( <div> <Button type="primary">注册时间</Button> <Divider type="vertical" /> <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" onChange={
-  (dates: any,
-  dateStrings: any[]) => {
-  setRegTime(dates.valueOf());
-ComponentStore.rangePickRegtime = _.toNumber( moment(regTime).format("X") );
-}
+### 实际案例
 
-}
-/> </div> ) : ( [] )
-}
-<Button type="primary">时间范围</Button> <Divider type="vertical" /> <RangePicker format="YYYY-MM-DD HH:mm:ss" placeholder={
-  ["开始时间",
-  "结束时间"]
-}
-onChange={
-  (dates: any,
-  dateStrings: any[]) => {
-  setStartTime(dates[].valueOf());
-setEndTime(dates[].valueOf());
-ComponentStore.rangePickStartTime = _.toNumber( moment(dates[].valueOf()).format("X") );
-ComponentStore.rangePickEndTime = _.toNumber( moment(dates[].valueOf()).format("X") );
-}
+```jsx
+// 日期范围选择组件
+const RangePickCondition = ({ onChange }) => {
+  const [dates, setDates] = useState([]);
+  const pickerRef = useRef(null);
 
-}
-/> </> ));
-}
-);
-export default RangePickCondition;
-但是我尝试在这个子组件中再加上一个小的子组件时候，用ref就会发现初始值出现延迟的问题，连续点击按钮两次，才能够获得正确数值，第一次只会获取这个useref定义的初始默认值。
+  useEffect(() => {
+    // 初始化逻辑
+  }, []);
 
-期间考虑了使用usecontext，然而效果依然不佳 最终想了想，这种传值还是只限于两层的父子组件中可以尝试，如果涉及多层，我还是决定引入mobx来作为统一的存储。
+  const handleChange = (values) => {
+    setDates(values);
+    onChange?.(values);
+  };
 
-这样就能够自如的进行组件的组合拼接，而不再去通过props，ref这些去做深层次的数值传递。
+  return (
+    <DatePicker.RangePicker 
+      ref={pickerRef}
+      value={dates}
+      onChange={handleChange}
+    />
+  );
+};
+```
 
-因为看到大家一般使用也是作为控件的简单操作会引入。
+## 遇到的问题
+
+### Ref 使用问题
+- 子组件中使用 ref 获取初始值存在延迟
+- 需要多次点击才能获取正确值
+- useRef 和 useState 配合使用需要注意时机
+
+### 解决方案
+1. 对于简单父子组件:
+   - 使用 props 传递数据
+   - ref 仅用于必要的 DOM 操作
+
+2. 对于复杂状态管理:
+   - 引入 MobX 统一管理状态
+   - 避免过深的组件嵌套
+
+## 最佳实践
+
+1. **状态管理选择**
+   - 简单场景: props + ref
+   - 中等复杂度: Context
+   - 复杂场景: MobX/Redux
+
+2. **组件设计原则**
+   - 保持组件纯粹性
+   - 避免过度设计
+   - 合理拆分组件
+
+3. **性能优化**
+   - 使用 useMemo 和 useCallback
+   - 避免不必要的重渲染
+   - 合理使用 React.memo
+
+## 参考资料
+- [React Hooks 文档](https://reactjs.org/docs/hooks-intro.html)
+- [Ant Design 组件库](https://ant.design)
+- [MobX 官方文档](https://mobx.js.org)

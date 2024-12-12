@@ -1,12 +1,84 @@
 ---
-title: nodejs kafka docker 部署遇到的坑
+title: Node.js + Kafka Docker部署实践
 date: 2022-04-23 05:31:48
+categories:
+  - 后端开发
+tags:
+  - Node.js
+  - Kafka
+  - Docker
+  - 微服务
 ---
 
-这个nodejs去链接 docker 部署的kafka 主要的坑点就一个，dockerhub 主要就是 bitanami/kafka 他们家的镜像比较好的样子，我暂时就只用一个kafka。
+## 部署经验
 
-唯一坑点就是 KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://xxx.xxx.xxx.xxx: 这个参数的配置需要 填内网ip，我看到有人说填外网ip也可以，不过我这边测试发现内网ip也就可以成功链接了。
+在使用 Docker 部署 Kafka 时,主要使用了 bitnami/kafka 镜像。这个镜像在 DockerHub 上口碑较好,功能完善。
 
-废话不多说，直接代码吧docker-compose文件 version: ""networks: kafka-net: driver: bridgeservices: zookeeper-server: image: "bitnami/zookeeper:latest" networks: - kafka-net ports: - ":" environment: - ALLOW_ANONYMOUS_LOGIN=yes kafdrop: image: obsidiandynamics/kafdrop networks: - kafka-net restart: "no" ports: - ":" environment: # KAFKA_BROKERCONNECT: "PLAINTEXT://kafka-server:,PLAINTEXT://kafka-server:,PLAINTEXT://kafka-server:" KAFKA_BROKERCONNECT: "PLAINTEXT://kafka-server:" JVM_OPTS: "-XmsM -XmxM -XssK -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify" depends_on: - "kafka-server" # - "kafka-server" # - "kafka-server" kafka-server: image: "bitnami/kafka:latest" networks: - kafka-net ports: - ":" environment: - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server: - ALLOW_PLAINTEXT_LISTENER=yes - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://...: depends_on: - zookeeper-server # kafka-server: # image: "bitnami/kafka:latest" # networks: # - kafka-net # ports: # - ":" # environment: # - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server: # - ALLOW_PLAINTEXT_LISTENER=yes # - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true # depends_on: # - zookeeper-server # kafka-server: # image: "bitnami/kafka:latest" # networks: # - kafka-net # ports: # - ":" # environment: # - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server: # - ALLOW_PLAINTEXT_LISTENER=yes # - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true # depends_on: # - zookeeper-server egg版本 'use strict';import * as kafka from 'kafka-node'const JSONbig = require('json-bigint');module.exports = app => { app.beforeStart(async () => { const ctx = app.createAnonymousContext(); const Producer = kafka.Producer; const client = new kafka.KafkaClient({ kafkaHost: app.config.kafkaHost }); const producer = new Producer(client, app.config.producerConfig); producer.on('error', function (err) { console.error('ERROR: [Producer] ' + err); }); producer.on('ready', function () { console.error('kafka ready '); }); app.producer = producer; const consumer = new kafka.Consumer(client, app.config.consumerTopics, { autoCommit: false, }); consumer.on('message', async function (message) { try { await ctx.service.userAction.insertUserAction(JSONbig.parse(message.value)); consumer.commit(true, (err, data) => { if (err) { console.error('commit:', err, data); } else { console.log(data) } }); } catch (error) { console.error('ERROR: [GetMessage] ', message, error); } }); consumer.on('error', function (err) { console.error('ERROR: [Consumer] ' + err); }); });}; /* * @Auther: renjm * @Date: -- :: * @LastEditTime: -- :: * @Description: */import { EggAppConfig, EggAppInfo, PowerPartial } from "egg";export default (appInfo: EggAppInfo) => { const config = {} as PowerPartial<EggAppConfig>; // override config from framework / plugin // use for cookie sign key, should change to your own and keep security config.keys = appInfo.name + '__'; // add your egg config in here config.middleware = []; const topic = 'actionLog'; // kafka config config.kafkaHost = '...:'; config.topic = topic; config.producerConfig = { partitionerType: , }; config.consumerTopics = [ { topic, partition:  }, { topic, partition:  }, { topic, partition:  }, ]; // add your special config in here const bizConfig = { sourceUrl: `https://github.com/eggjs/examples/tree/master/${appInfo.name}`, security: { csrf: { enable: false, }, }, }; // the return config will combines to EggAppConfig return { ...config, ...bizConfig, };}; 其实出去网络链接的坑点以外，其他人的博客已经很详细的描述了如何去起服务和后续进程，只不过大家都遗漏或者都没碰到这个外面链接的情况，一堆人都是直接docker里面通过sh脚本去作为成功的结尾，弄的我很无奈。
+### 关键配置点
 
-同时注意去dockerhub中去查看官方文档，里面的参数很详细，关注这个KAFKA_CFG_ADVERTISED_LISTENERS 然后去查看相关的解释，会更好的理解
+最重要的配置是 `KAFKA_CFG_ADVERTISED_LISTENERS` 参数:
+```bash
+KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://xxx.xxx.xxx.xxx:9092
+```
+
+- 需要配置内网IP(有些场景也可以使用外网IP)
+- 这个配置对客户端连接至关重要
+
+### Docker Compose 配置
+
+```yaml
+version: "3"
+
+networks:
+  kafka-net:
+    driver: bridge
+
+services:
+  zookeeper-server:
+    image: "bitnami/zookeeper:latest"
+    networks:
+      - kafka-net
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    networks:
+      - kafka-net
+    restart: "no"
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "PLAINTEXT://kafka-server:9092"
+      JVM_OPTS: "-Xms128M -Xmx256M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - "kafka-server"
+
+  kafka-server:
+    image: "bitnami/kafka:latest"
+    networks:
+      - kafka-net
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://xxx.xxx.xxx.xxx:9092
+    depends_on:
+      - zookeeper-server
+```
+
+## 注意事项
+
+1. 仔细阅读 DockerHub 上的官方文档
+2. 关注 KAFKA_CFG_ADVERTISED_LISTENERS 参数的配置说明
+3. 确保网络配置正确
+4. 合理设置 JVM 参数
+
+## 参考资料
+- [Bitnami Kafka Docker Hub](https://hub.docker.com/r/bitnami/kafka)
+- [Kafka Documentation](https://kafka.apache.org/documentation/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)

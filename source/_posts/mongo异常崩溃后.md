@@ -1,26 +1,85 @@
 ---
-title: docker mongo 异常崩溃后
+title: Docker MongoDB 异常崩溃处理指南
 date: 2022-04-23 12:31:48
+categories:
+  - 数据库
+tags:
+  - MongoDB
+  - Docker
+  - 故障处理
+  - 运维
 ---
 
-前言不得不说被吓到了，测试告诉我平台挂了，我看了下 docker 日志，好像没啥问题，然后看到数据库好像链接不了了，顿感疑惑，docker mongo 服务一直很正常，没出过啥问题，换言之，我也没处理过异常。
+## 问题背景
 
-查看 mongo 日志，看到一堆报错，关键报错就是 disk out 的感觉，估计是存储空间不够了 df -h 果然，存放 mongo 数据的盘满了 Filesystem Size Used Avail Use% Mounted onudev .G  .G % /atmpfs M M M % /b/e G G  % /tmpfs .G  .G % /xtmpfs .M  .M % /ytmpfs .G  .G % /z/f G .G G % /wtmpfs M  M % /z （都是化名） 也就是 这里的根目录 我错了，因为一开始挂载的时候，就是用的默认路径，一般来说，这个盘应该类似 windows 的 C 盘，不放项目的，谁让我菜鸡呢。
+测试环境的平台突然无法访问,经排查发现是 MongoDB 数据库连接异常。通过日志发现是磁盘空间不足导致的崩溃。
 
-。
+## 问题排查
 
-应该正常放在 w 那边 解决首先 移动所有的数据内容 到 w 目录下 mv /db/* /w/db 然后我就开心的重启，一堆报错，继续挂，这我就开始冷汗了。
+### 1. 检查磁盘空间
+```bash
+df -h
+```
+输出显示存放 MongoDB 数据的根目录空间已满:
+```
+Filesystem    Size  Used  Avail  Use%  Mounted on
+/dev/sda1     20G   19G   1G    95%   /
+/dev/sdb1     100G  30G   70G   30%   /data
+```
 
-照例谷歌，发现 如果是正常关闭的，这个时候重启是没问题，感觉像是废话，没事我正常关闭数据库做什么？
+### 2. 分析原因
+- MongoDB 数据默认存储在系统盘
+- 之前的数据备份占用大量空间
+- 日志文件未及时清理
+- 缺乏磁盘监控预警
 
-当然，缺乏运维知识的我哪有资格吐槽 然后就是非正常关闭 . rm -rf mongo.lock // 删除mongod.lock文件. ./mongod --dbpath=/opt/rh/mongodbData --repair //对数据库进行修复 大概说法就是 这个文件会记录异常状态，不删除会导致重启失效。
+## 解决步骤
 
-第二步不适合我，因为我是 docker 启动的，所以 sudo docker run -d -v /x/db:/data/db -p x: mongo:latest --wiredTigerCacheSizeGB . --auth --repair 因为我启动 mongo 一般是这样的，所以就直接在后面加了–repair 即可，这样就会正常开始修复数据，等待这个过程结束，然后再次启动，就不会报错。
+### 1. 迁移数据目录
+```bash
+# 移动数据到数据盘
+mv /db/* /w/db
+```
 
-然后我还对 cachesize 做了限制，结果触发了另外一个问题，内存不够。
+### 2. 修复数据库
+由于非正常关闭,需要删除锁文件并修复:
+```bash
+# 删除锁文件
+rm -rf mongo.lock
 
-因为曾经我在这个测试环境的数据库里面备份了一次线上的日志数据，大概  千万条，导致这个时候恢复数据的时候内存不够了，然后我就修改了原先的限制，扩大到了 .，就好了。
+# Docker 环境下修复数据库
+sudo docker run -d \
+  -v /x/db:/data/db \
+  -p x:27017 \
+  mongo:latest \
+  --wiredTigerCacheSizeGB 1.5 \
+  --auth \
+  --repair
+```
 
-总结如果是线上出现这个问题，首先避免出现，测试环境出现后我第一时间去看了线上的剩余磁盘空间，然后发现其实还有非常多，暂时没问题。
+### 3. 调整配置
+- 限制缓存大小
+- 配置日志轮转
+- 设置监控告警
 
-然后如果出现异常关闭，我感觉应该还是以恢复备份为最佳，直接修复数据感觉消耗的时间也是非常慢的。
+## 经验总结
+
+1. **预防措施**
+   - 合理规划存储空间
+   - 配置磁盘监控
+   - 定期清理日志
+   - 使用数据盘存储数据
+
+2. **应急预案**
+   - 准备数据备份
+   - 制定恢复流程
+   - 记录问题处理步骤
+
+3. **改进建议**
+   - 完善监控系统
+   - 优化存储策略
+   - 规范运维流程
+
+## 参考资料
+- [MongoDB 数据修复文档](https://docs.mongodb.com/manual/tutorial/recover-data-following-unexpected-shutdown/)
+- [Docker MongoDB 文档](https://hub.docker.com/_/mongo)

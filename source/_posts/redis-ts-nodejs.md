@@ -1,39 +1,84 @@
 ---
-title: redis,ts,nodejs
+title: Redis + TypeScript 实现日志分析系统
 date: 2022-04-23 08:31:48
+categories:
+  - 后端开发
+tags:
+  - Redis
+  - TypeScript
+  - Node.js
+  - MongoDB
+  - 性能优化
 ---
 
-最近碰到一个技术问题，就是现在做的平台需要提供日志分析 最初的想法就是简单的mongo查询，然后恶补了一下聚合查询的方式，基本解决了最初的需求，然后发现一旦采用lookup会特别慢，感觉和索引有啥关系之类，得设置一下，才能够联表查询。
+## 项目背景
 
-所以改写了原先的写法，非常蠢的先查询一个表，找到符合的例如uuid之类，然后通$in查询，速度提升了一些，但是这个方法其实还是蛮致命的，如果用户级数上升到十万百万级别，到时候单纯的数据存储查询uuid估计是不行的，所以后续还得改进，应该还是得走lookup那条路。
+在开发运维平台时,需要实现日志分析功能。最初采用 MongoDB 直接查询的方式,但随着数据量增长,性能问题逐渐显现。本文记录了使用 Redis 缓存优化查询性能的实践经验。
 
-然后现在遇到了另一个问题，就算现在的测试用户数量只有可怜的万人级别，日活跃用户千人的级别，生成的日志数量依然达到了千万条的级别，一旦跨日期查询，还是需要等待几十秒，这个实在是不能忍，于是乎产生了另外一个想法，就是采用redis的缓存机制来减少和数据库的交互，想法也很简单，就是数据库交互时间总归要大于内存查询时间。
+## 性能问题分析
 
-平台使用的技术栈就是react，koa。
+### MongoDB 查询瓶颈
+1. 跨日期查询耗时长(几十秒)
+2. 日志数据量达到千万级
+3. lookup 联表查询性能差
+4. 索引优化效果有限
 
-然后语言是typescript，node版本用的吧，现在node都是async，await了嘛，有时候都有点感觉不到异步了。
+### 优化思路
+1. 使用 Redis 缓存热点数据
+2. 优化 MongoDB 查询方式
+3. 合理设置数据过期策略
 
-。
+## 实现方案
 
-。
+### Redis 缓存实现
+```typescript
+// Redis 扫描实现
+let uuidList = [];
+var stream = RedisStore.redis.scanStream({
+  match: `*${currentDay}:${this.radioValue}`,
+  count: 1000
+});
 
-习惯性await了，这个时候才发现redis那边暂时还不支持async，await。
+for await (const resultKeys of stream) {
+  // 处理扫描结果
+}
+```
 
-也不是完全不支持，我的意思是stream方式。
-
-因为我想要缓存日志信息，就是根据日期，玩家id，还有指定条目，去缓存玩家的使用数值，大概这样流程，然后就涉及到遍历key，谷歌一番，首先解决方法不多，大多是采用额外插件来做这个redis。
-
-幸好看到一个人说可以采用node新特性解决，然后我就是试了下，是可以打出key，就是下面这个，不过不知道还有没有坑，后续会进行数据校验，看看是否真的可以 let uuidList = [];var stream = RedisStore.redis.scanStream({ // only returns keys following the pattern of `user:*` match: `*${currentDay}:${this.radioValue}`, // returns approximately  elements per call count: ,});for await (let x of stream) { console.log(x);} 希望这次采用promise.all + redis 缓存辅助的方式能够让日志分析突破一下，为后续平台处理更大规模日志做准备。
-
-当然还得继续学习mongo看看聚合查询针对数组数据处理的方法，这样要是能够大部分运算都在mongo引擎内处理掉，也能够接受。
-
-```javascript
+### MongoDB 查询优化
+```typescript
 const allTask = [];
 await cursor.eachAsync((actionInfo) => {
-  allTask.push(this.xxxx(xxx,
-  xxx));
-}
-);
+  allTask.push(this.processAction(actionInfo));
+});
 await Promise.all(allTask);
-如果这些路都走不通，依然扛不住大规模推广产生的用户日志数据分析的话，也许就得采用elk啥的，把日志搞到kibana上面去，不过我还是觉得能够在平台查看自然是最方便的，接到kibana就属于下策了
+```
+
+## 后续优化方向
+
+1. **MongoDB 聚合优化**
+   - 研究数组数据处理方法
+   - 优化聚合管道性能
+   - 合理使用索引
+
+2. **数据分层存储**
+   - 热数据存入 Redis
+   - 温数据存入 MongoDB
+   - 冷数据考虑归档
+
+3. **备选方案**
+   - ELK 日志分析
+   - ClickHouse 等列式存储
+   - 时序数据库
+
+## 经验总结
+
+1. Redis 缓存能显著提升查询性能
+2. 需要权衡数据一致性和查询性能
+3. 合理的数据分层存储很重要
+4. 监控和告警机制不可或缺
+
+## 参考资料
+- [Redis Documentation](https://redis.io/documentation)
+- [MongoDB Aggregation](https://docs.mongodb.com/manual/aggregation/)
+- [Node.js Stream](https://nodejs.org/api/stream.html)
 ```

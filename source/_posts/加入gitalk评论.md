@@ -1,12 +1,84 @@
 ---
-title: 加入 gitalk 评论
+title: 为 Hexo 博客添加 Gitalk 评论系统
 date: 2020-05-25 09:31:48
+categories:
+  - 博客搭建
+tags:
+  - Hexo
+  - Gitalk
+  - GitHub
+  - 评论系统
 ---
 
-给博客添加 Gitalk valine 一开始我是想要用这个的，毕竟我用的 ayer 主题，人家也推荐使用 valine，不过我去注册账号，结果到实名认证那给我掉链子，我填好身份证号，然后报错，看上去是说我的用户类型没有选择，不过页面上也没有什么用户类型选择的地方，就是简单的填名字，填身份证号，太气人了，谷歌了报错也没找出啥解决方法，就只能放弃了。
+## 配置步骤
 
-然后就是用 gitalk 了。
+### 1. 注册 GitHub OAuth Application
 
-这个就是比较简单了，用的人也还行，主要就两个点，就是一开始可以新建一个仓库作为评论存放的地点，我感觉不新建也行，因为其实这个 gitalk 只是用到了 issue 区域，所以应该和你部署的博客仓库一个地址也行。
+1. 进入 GitHub Settings -> Developer settings -> OAuth Apps
+2. 点击 "New OAuth App"
+3. 填写相关信息:
+   - Application name: 随意填写
+   - Homepage URL: 博客地址
+   - Authorization callback URL: 博客地址
 
-然后就是按照指导去创建一个 oauth application 了，获取对应的 client secret，然后就成功了，这个本地查看好像不行，得部署了才正常，我这边是这个情况，会报 network error 不过呢感觉有点不够好的地方就是这个 gitalk 是需要 github 登陆之后才能评论的，要么你只能看评论，感觉要是有匿名就好了。
+### 2. 安装 Gitalk
+
+```bash
+npm install --save gitalk
+```
+
+### 3. 修改主题配置
+
+在主题的 _config.yml 中添加:
+
+```yaml
+gitalk:
+  enable: true
+  clientID: 'GitHub Application Client ID'
+  clientSecret: 'GitHub Application Client Secret'
+  repo: 'GitHub repo name'
+  owner: 'GitHub repo owner'
+  admin: ['GitHub repo owner and collaborators']
+  distractionFreeMode: false
+```
+
+### 4. 添加评论组件
+
+在 themes/your-theme/layout/_partial/article.ejs 中添加:
+
+```html
+<% if (theme.gitalk.enable && page.comments) { %>
+  <div id="gitalk-container"></div>
+  <script>
+    const gitalk = new Gitalk({
+      clientID: '<%= theme.gitalk.clientID %>',
+      clientSecret: '<%= theme.gitalk.clientSecret %>',
+      repo: '<%= theme.gitalk.repo %>',
+      owner: '<%= theme.gitalk.owner %>',
+      admin: ['<%= theme.gitalk.admin %>'],
+      id: location.pathname,
+      distractionFreeMode: false
+    })
+    gitalk.render('gitalk-container')
+  </script>
+<% } %>
+```
+
+## 注意事项
+
+1. **安全性**
+   - 不要泄露 Client Secret
+   - 谨慎设置 admin 权限
+
+2. **评论初始化**
+   - 首次需要管理员登录初始化
+   - 每篇文章都需要单独初始化
+
+3. **常见问题**
+   - Error: Not Found
+   - Error: Validation Failed
+   - 评论无法加载
+
+## 参考资料
+- [Gitalk 文档](https://github.com/gitalk/gitalk/blob/master/readme-cn.md)
+- [GitHub OAuth 文档](https://docs.github.com/en/developers/apps/building-oauth-apps)
