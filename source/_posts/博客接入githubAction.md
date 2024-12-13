@@ -58,6 +58,8 @@ Hexo 博客通常涉及两个 GitHub 仓库：
 5. 名称设置为 `BLOG`（全大写），这一步是无所谓的，我用的BLOG，其实名称随意配置，只要yml中的匹配就行
 6. 将之前生成的 Token 粘贴为 Value
 
+![Secrets and variables](/images/hexoSecret.png)
+
 ### 工作流配置关键点
 
 在早期实践中，我遇到了一些常见问题：
