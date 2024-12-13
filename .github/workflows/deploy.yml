@@ -11,27 +11,56 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2 # 检出代码
+        uses: actions/checkout@v3 # 更新到最新版本
+        with:
+          fetch-depth: 0 # 获取完整的 Git 历史
+
+      - name: Debug Information
+        run: |
+          echo "GitHub Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          git config --list
+          ls -la
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "20" # 设置 Node.js 版本（根据需要调整）
 
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
-        run: npm install # 安装依赖（如果有的话）
+        run: |
+          npm install
+          npm install hexo-cli hexo-deployer-git
 
       - name: Configure Git
+        env:
+          GITHUB_TOKEN: ${{ secrets.BLOG }}
         run: |
           git config --global user.email "rjm1149104294@outlook.com"
           git config --global user.name "johnsmithsren"
-          git remote set-url origin https://x-access-token:${{ secrets.BLOG }}@github.com/johnsmithsren/renjmBlog.github.io.git
+          git config --global url."https://oauth2:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
+          git remote -v
 
-      - name: Run deploy script
-        run: bash deploy.sh # 执行部署脚本
+      - name: Hexo Clean and Generate
+        run: |
+          npx hexo clean
+          npx hexo generate
+
+      - name: Hexo Deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.BLOG }}
+        run: |
+          npx hexo deploy || echo "Deployment failed"
+
+      - name: Detailed Error Logging
+        if: failure()
+        run: |
+          echo "Deployment failed. Checking Git configuration and remote..."
+          git config --list
+          git remote -v

@@ -103,5 +103,7 @@ theme: butterfly
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: git
-  repo: https://github.com/johnsmithsren/renjmBlog.github.io.git
+  repo: 
+    github: https://github.com/johnsmithsren/renjmBlog.github.io.git
   branch: master
+  message: "Site updated: {{ now('YYYY-MM-DD HH:mm:ss') }}"
