@@ -1,6 +1,5 @@
 #!/bin/bash
-# 设置默认分支名称
-git config --global init.defaultBranch master
+## 已经不需要了，配置github ci/cd 直接push就可以了
 # 开始部署
 echo "=== Starting Deployment ==="
 
