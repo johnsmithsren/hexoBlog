@@ -31,7 +31,7 @@ jobs:
         run: |
           git config --global user.email "rjm1149104294@outlook.com"
           git config --global user.name "johnsmithsren"
-          git remote set-url origin https://x-access-token:${{ secrets.DEPLOYBLOG }}@github.com/johnsmithsren/renjmBlog.github.io.git
+          git remote set-url origin https://x-access-token:${{ secrets.BLOG }}@github.com/johnsmithsren/renjmBlog.github.io.git
 
       - name: Run deploy script
         run: bash deploy.sh # 执行部署脚本
