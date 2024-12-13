@@ -1,6 +1,6 @@
 #!/bin/bash
 # 设置默认分支名称
-git config --global init.defaultBranch main
+git config --global init.defaultBranch master
 # 开始部署
 echo "=== Starting Deployment ==="
 
@@ -9,13 +9,6 @@ set -e  # 如果有任何命令失败，脚本将立即退出
 
 # 输出当前时间
 echo "Deployment started at: $(date)"
-
-# 进入项目目录（如果需要）
-# cd /path/to/your/project
-
-# 安装依赖（如果有必要）
-echo "Installing dependencies..."
-npm install
 
 # 清理项目
 echo "Cleaning the project..."
