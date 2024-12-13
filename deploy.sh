@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# 设置默认分支名称
+git config --global init.defaultBranch main
 # 开始部署
 echo "=== Starting Deployment ==="
 

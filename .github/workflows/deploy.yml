@@ -27,5 +27,10 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "rjm1149104294@outlook.com"
+          git config --global user.name "johnsmithsren"
+
       - name: Run deploy script
         run: bash deploy.sh # 执行部署脚本
