@@ -10,6 +10,10 @@ menu:
 # 网站图标
 favicon: /img/favicon.png
 
+# 头像设置
+avatar:
+  img: /images/ice.jpg
+
 # 代码块设置
 highlight_theme: mac light
 highlight_copy: true
