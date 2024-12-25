@@ -73,6 +73,35 @@ process.on('uncaughtException', (err) => console.error('Uncaught Exception:', er
 process.on('unhandledRejection', (reason) => console.error('Unhandled Rejection:', reason));
 ```
 
+### 延迟函数
+主要通过promise和定时器的方式来实现延迟函数，阻塞函数，感觉还是挺有用的，比如解决缓存击穿的情况，应对热点数据的高并发读取
+感觉一般来说js服务中不出现while吧，主要是用promise+定时器，主要while作为同步，还是风险太大了
+```javascript
+function delay(time) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, time);
+    });
+}
+function waitForResponse(func){
+    return new Promise((resolve, reject) => {
+       let timeoutFlag = setTimeout(() => {
+        resolve();
+       }, 5000);
+       let intervalFlag = setInterval(() => {
+        func().then(() => {
+            clearTimeout(timeoutFlag);
+            clearInterval(intervalFlag);
+            resolve();
+        }).catch((error) => {
+            reject(error);
+        })
+       }, 3000);
+    })
+}
+
+```
 ### 异步错误处理
 对于复杂逻辑，特别是涉及异步流程时，必须使用 try-catch 确保代码健壮性。
 
