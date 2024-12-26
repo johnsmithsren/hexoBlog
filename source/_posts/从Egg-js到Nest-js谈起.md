@@ -9,7 +9,7 @@ tags:
   - Egg.js
   - Nest.js
   - TypeScript
-cover: /images/young.png
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/young.png
 ---
 
 ## 引言

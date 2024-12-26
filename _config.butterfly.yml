@@ -97,7 +97,6 @@ darkmode:
 preloader:
   enable: true
   source: 1
-
 # CDN 设置
 # CDN:
 #   option:

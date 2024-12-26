@@ -8,7 +8,7 @@ tags:
   - React
   - JavaScript
   - Hooks
-cover: /images/react.png
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/react.png
 ---
 
 ## 引言
