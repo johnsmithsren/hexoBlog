@@ -1,5 +1,5 @@
 ---
-layout: post
+
 title: React 图片动画加载技术详解
 date: 2024-12-16 11:25:14
 tags:

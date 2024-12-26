@@ -1,5 +1,5 @@
 ---
-layout: post
+
 title: Git 使用：git revert 与 git reset 的差异
 date: 2024-12-13 10:21:30
 tags:
