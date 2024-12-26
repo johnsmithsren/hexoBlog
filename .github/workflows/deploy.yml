@@ -38,6 +38,7 @@ jobs:
         run: |
           git config --global user.name 'johnsmithsren'
           git config --global user.email 'rjm1149104294@outlook.com'
+          git config --global url."git://oauth2:${GITHUB_TOKEN}@github.com"
 
       - name: Build Hexo Site
         run: |
