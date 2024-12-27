@@ -5,6 +5,7 @@ tags:
   - Node.js
 categories:
   - 后端开发
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/nodejs.webp
 ---
 
 ## Node.js 事件循环机制
