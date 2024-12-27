@@ -38,9 +38,7 @@ jobs:
         run: |
           git config --global user.name 'johnsmithsren'
           git config --global user.email 'rjm1149104294@outlook.com'
-          git remote set-url origin https://oauth2:${GITHUB_TOKEN}@github.com/johnsmithsren/renjmBlog.github.io.git
-          # git remote set-url origin https://oauth2:${GITHUB_TOKEN}@github.com/johnsmithsren/hexoBlog.git
-          # git config --global url."https://oauth2:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
+          git config --global url."https://oauth2:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Build Hexo Site
         run: |
