@@ -7,7 +7,7 @@ tags:
   - 前端开发
 categories:
   - 编程语言
-cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/typescript.png
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/ts.webp
 ---
 
 ## TypeScript 简介
