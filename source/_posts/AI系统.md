@@ -388,3 +388,234 @@ function gameLoop(deltaTime: number) {
     behaviorTree.update(deltaTime);
 }
 ```
+
+## 4. BOSS多阶段战斗实现
+
+### 4.1 BOSS阶段管理
+```typescript
+// BOSS阶段枚举
+enum BossPhase {
+    PHASE_1,    // 第一阶段 (100% - 70%)
+    PHASE_2,    // 第二阶段 (70% - 40%)
+    PHASE_3     // 第三阶段 (40% - 0%)
+}
+
+// 扩展Blackboard以支持阶段管理
+class BossBlackboard extends Blackboard {
+    currentPhase: BossPhase = BossPhase.PHASE_1;
+    maxHealth: number;
+    minions: Enemy[] = [];
+    lastSummonTime: number = 0;
+    summonCooldown: number = 10; // 10秒召唤冷却
+
+    constructor(boss: Enemy, target: Player) {
+        super(boss, target);
+        this.maxHealth = boss.health;
+    }
+
+    // 更新BOSS阶段
+    updatePhase(): void {
+        const healthPercent = (this.enemy.health / this.maxHealth) * 100;
+        
+        if (healthPercent <= 40) {
+            this.currentPhase = BossPhase.PHASE_3;
+        } else if (healthPercent <= 70) {
+            this.currentPhase = BossPhase.PHASE_2;
+        }
+    }
+
+    // 获取当前阶段的技能增强倍率
+    getDamageMultiplier(): number {
+        switch (this.currentPhase) {
+            case BossPhase.PHASE_1: return 1.0;
+            case BossPhase.PHASE_2: return 1.5;
+            case BossPhase.PHASE_3: return 2.0;
+            default: return 1.0;
+        }
+    }
+}
+
+// 检查阶段转换条件
+class CheckPhaseTransition extends BTNode {
+    private targetPhase: BossPhase;
+
+    constructor(blackboard: BossBlackboard, targetPhase: BossPhase) {
+        super(blackboard);
+        this.targetPhase = targetPhase;
+    }
+
+    tick(): NodeStatus {
+        return (this.blackboard as BossBlackboard).currentPhase === this.targetPhase
+            ? NodeStatus.SUCCESS
+            : NodeStatus.FAILURE;
+    }
+}
+
+// 召唤小怪行为
+class SummonMinions extends BTNode {
+    private minionCount: number;
+    private minionType: string;
+
+    constructor(blackboard: BossBlackboard, count: number, type: string) {
+        super(blackboard);
+        this.minionCount = count;
+        this.minionType = type;
+    }
+
+    tick(): NodeStatus {
+        const bb = this.blackboard as BossBlackboard;
+        const currentTime = performance.now() / 1000;
+
+        // 检查召唤冷却
+        if (currentTime - bb.lastSummonTime < bb.summonCooldown) {
+            return NodeStatus.FAILURE;
+        }
+
+        // 清理已死亡的小怪
+        bb.minions = bb.minions.filter(minion => minion.health > 0);
+
+        // 如果小怪数量未达到上限，则召唤新的小怪
+        if (bb.minions.length < this.minionCount) {
+            const boss = bb.enemy;
+            const angle = (Math.PI * 2) / this.minionCount;
+            
+            for (let i = bb.minions.length; i < this.minionCount; i++) {
+                const x = boss.x + Math.cos(angle * i) * 100;
+                const y = boss.y + Math.sin(angle * i) * 100;
+                
+                const minion = new Enemy(x, y);
+                minion.health = 50;
+                minion.damage = 10;
+                minion.type = this.minionType;
+                
+                bb.minions.push(minion);
+            }
+            
+            bb.lastSummonTime = currentTime;
+            return NodeStatus.SUCCESS;
+        }
+
+        return NodeStatus.FAILURE;
+    }
+}
+
+// 狂暴化行为（第三阶段特有）
+class Enrage extends BTNode {
+    tick(): NodeStatus {
+        const bb = this.blackboard as BossBlackboard;
+        const boss = bb.enemy;
+        
+        // 增加移动速度和攻击力
+        boss.speed *= 1.5;
+        boss.damage *= bb.getDamageMultiplier();
+        
+        return NodeStatus.SUCCESS;
+    }
+}
+
+// 扩展BOSS行为树
+class BossBehaviorTree extends EnemyBehaviorTree {
+    constructor(boss: Enemy, target: Player) {
+        super(boss, target);
+    }
+
+    protected buildTree(): BTNode {
+        const bb = this.blackboard as BossBlackboard;
+        const root = new Selector(bb);
+
+        // 第一阶段行为
+        const phase1Sequence = new Sequence(bb);
+        phase1Sequence.addChild(new CheckPhaseTransition(bb, BossPhase.PHASE_1));
+        phase1Sequence.addChild(new Selector(bb, [
+            new Sequence(bb, [
+                new CheckHealthCondition(bb, 90),
+                new RangedAttack(bb, 15, 2)
+            ]),
+            new ChaseTarget(bb, 80)
+        ]));
+
+        // 第二阶段行为
+        const phase2Sequence = new Sequence(bb);
+        phase2Sequence.addChild(new CheckPhaseTransition(bb, BossPhase.PHASE_2));
+        phase2Sequence.addChild(new Selector(bb, [
+            new SummonMinions(bb, 3, "skeleton"),
+            new Sequence(bb, [
+                new CheckDistanceCondition(bb, 150),
+                new RangedAttack(bb, 25, 1.5)
+            ]),
+            new ChaseTarget(bb, 100)
+        ]));
+
+        // 第三阶段行为
+        const phase3Sequence = new Sequence(bb);
+        phase3Sequence.addChild(new CheckPhaseTransition(bb, BossPhase.PHASE_3));
+        phase3Sequence.addChild(new Enrage(bb));
+        phase3Sequence.addChild(new Selector(bb, [
+            new SummonMinions(bb, 5, "demon"),
+            new Sequence(bb, [
+                new CheckDistanceCondition(bb, 100),
+                new RangedAttack(bb, 40, 1)
+            ]),
+            new ChaseTarget(bb, 120)
+        ]));
+
+        // 将所有阶段添加到根节点
+        root.addChild(phase1Sequence);
+        root.addChild(phase2Sequence);
+        root.addChild(phase3Sequence);
+
+        return root;
+    }
+
+    update(deltaTime: number): void {
+        (this.blackboard as BossBlackboard).updatePhase();
+        super.update(deltaTime);
+    }
+}
+```
+
+### 4.2 使用示例
+```typescript
+// 创建BOSS战斗
+const boss = new Enemy(400, 300);
+boss.health = 1000;  // BOSS有1000血量
+boss.damage = 30;    // 基础伤害
+boss.speed = 60;     // 基础速度
+
+const player = new Player(100, 100);
+const bossAI = new BossBehaviorTree(boss, player);
+
+// 游戏循环
+function gameLoop(deltaTime: number) {
+    bossAI.update(deltaTime);
+    
+    // 更新小怪AI
+    const bb = bossAI.blackboard as BossBlackboard;
+    for (const minion of bb.minions) {
+        // 可以给小怪也配置简单的行为树
+        updateMinionBehavior(minion, player);
+    }
+}
+```
+
+这个多阶段BOSS战斗系统的特点：
+
+1. **分阶段行为**
+   - 第一阶段 (100%-70%): 基础攻击模式
+   - 第二阶段 (70%-40%): 召唤骷髅小怪，伤害提升50%
+   - 第三阶段 (40%-0%): 进入狂暴状态，召唤恶魔，伤害翻倍
+
+2. **动态难度**
+   - 血量越低，攻击越强
+   - 不同阶段召唤不同类型和数量的小怪
+   - 最后阶段会进入狂暴状态
+
+3. **小怪管理**
+   - 自动清理已死亡的小怪
+   - 控制召唤冷却时间
+   - 小怪围绕BOSS呈环形分布
+
+4. **可扩展性**
+   - 易于添加新的阶段
+   - 可以为每个阶段定制独特的技能组合
+   - 可以调整各种参数来平衡难度
