@@ -42,12 +42,55 @@ location /api {
     add_header Access-Control-Allow-Headers 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
 }
 ```
-
 #### 2. 动态配置（后端方案）
 适用于多客户端、多域名访问的场景：
 - 在后端中间件中动态设置CORS头
 - 可以根据请求来源动态判断是否允许跨域
 - 支持更灵活的访问控制策略
+
+各个框架都有不同的解决方案，暂且抛砖引玉，用的是eggjs
+```
+import { HttpStatusCode } from "axios";
+
+export default () => {
+    return async function cors(ctx, next) {
+        const { allowedOrigins } = ctx.app.config.cors;
+        const origin = ctx.request.origin
+        ctx.app.logger.info(`origin: ${origin}`, `allowedOrigins: ${JSON.stringify(allowedOrigins)}`);
+        // 验证来源
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+            ctx.set('Access-Control-Allow-Origin', origin);
+            ctx.set('Access-Control-Allow-Credentials', 'true');
+            ctx.set('Access-Control-Allow-Methods', ctx.app.config.cors.allowMethods);
+            ctx.set('Access-Control-Allow-Headers', ctx.app.config.cors.allowHeaders.join(','));
+            ctx.set('Access-Control-Expose-Headers', ctx.app.config.cors.exposeHeaders.join(','));
+            ctx.set('Access-Control-Max-Age', ctx.app.config.cors.maxAge);
+
+            // 添加安全相关头   
+            ctx.set('X-Content-Type-Options', 'nosniff');
+            ctx.set('X-Frame-Options', 'DENY');
+            ctx.set('X-XSS-Protection', '1; mode=block');
+        } else {
+            ctx.status = HttpStatusCode.Forbidden;
+            ctx.body = {
+                code: HttpStatusCode.Forbidden,
+                msg: 'orgin not allowed',
+                data: null,
+            };
+            return
+        }
+
+        // 处理预检请求
+        if (ctx.method === 'OPTIONS') {
+            ctx.status = 204;
+            return;
+        }
+
+        await next();
+    };
+};
+
+```
 
 ## OAuth 2.0 授权详解
 
