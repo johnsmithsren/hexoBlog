@@ -7,6 +7,7 @@ tags:
   - 跨域
   - 网络安全
   - Web开发
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/cors.jpg
 ---
 
 ## 跨域（CORS）详解
