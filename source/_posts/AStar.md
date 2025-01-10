@@ -86,19 +86,12 @@ class AStar {
 
         // 计算经过当前节点到达邻居节点的代价
         const tentativeG = current.g + 1;
-
+        neighbor.g = tentativeG;
+        neighbor.f = neighbor.g + this.distance(neighbor, end);
+        this.cameFrom.set(neighborKey, current);
         // 如果是新节点，添加到openList
         if (!this.openList.has(neighborKey)) {
-          neighbor.g = tentativeG;
-          neighbor.f = neighbor.g + this.distance(neighbor, end);
           this.openList.set(neighborKey, neighbor);
-          this.cameFrom.set(neighborKey, current);
-        }
-        // 如果找到更优路径，更新节点信息
-        else if (tentativeG < neighbor.g) {
-          neighbor.g = tentativeG;
-          neighbor.f = neighbor.g + this.distance(neighbor, end);
-          this.cameFrom.set(neighborKey, current);
         }
       }
     }
