@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install Dependencies
         run: |
@@ -38,18 +38,27 @@ jobs:
         run: |
           git config --global user.name 'johnsmithsren'
           git config --global user.email 'rjm1149104294@outlook.com'
-          git config --global url."https://oauth2:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
+          # Use token for authentication instead of standard URL
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Build Hexo Site
         run: |
           npx hexo clean
           npx hexo generate
 
+      - name: Configure Deployment Repository
+        run: |
+          # Update _config.yml with token-based URL for deployment
+          sed -i 's#repository:.*#repository: https://x-access-token:${{ secrets.BLOG }}@github.com/johnsmithsren/renjmBlog.github.io.git#' _config.yml
+          # Ensure the repo URL is correctly formatted in your config
+          cat _config.yml | grep "repository:"
+
       - name: Deploy to GitHub Pages
         env:
           GITHUB_TOKEN: ${{ secrets.BLOG }}
         run: |
-          npx hexo deploy || {
+          # Ensure git operations don't prompt for credentials
+          GIT_TERMINAL_PROMPT=0 npx hexo deploy || {
             echo "Deployment failed"
             exit 1
           }
