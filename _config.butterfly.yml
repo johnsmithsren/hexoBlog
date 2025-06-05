@@ -20,7 +20,6 @@ highlight_copy: true
 highlight_lang: true
 highlight_shrink: false
 highlight_height_limit: 200
-index_img_height: 50vh # 图片高度设置为屏幕高度的25%
 default_top_img: /renjmBlog.github.io/images/roam.jpg
 # background: /renjmBlog.github.io/images/roam.jpg
 # 社交图标
