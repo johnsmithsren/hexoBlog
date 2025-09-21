@@ -1,5 +1,5 @@
 ---
-layout: post
+
 title: 从Egg.js到Nest.js谈起
 date: 2024-12-08 20:05:03
 categories:
@@ -9,7 +9,7 @@ tags:
   - Egg.js
   - Nest.js
   - TypeScript
-cover: /images/young.png
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/young.png
 ---
 
 ## 引言

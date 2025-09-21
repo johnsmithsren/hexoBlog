@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇游戏</title>
+    <style>
+        /* 重置所有样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: transparent;
+        }
+        
+        #gameCanvas {
+            border: 2px solid #333;
+            background: #f0f0f0;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 10px;
+            background: transparent;
+        }
+        
+        .controls {
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .score {
+            font-size: 20px;
+            margin: 10px 0;
+            text-align: center;
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+        
+        button:hover {
+            background: #388E3C;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        
+        <canvas id="gameCanvas" width="100%" height="400"></canvas>
+        <div class="controls">
+            <button onclick="startGame()">开始游戏</button>
+            <button onclick="pauseGame()">暂停/继续</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const box = 20
+        let drawInterval = null
+        let defaultSpeed = 500;
+        let drawProcess = false
+        // 设置canvas为全屏
+        // 声明为全局变量
+        let gridWidth, gridHeight;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // 重新计算网格数量
+            gridWidth = Math.floor(canvas.width / box);
+            gridHeight = Math.floor(canvas.height / box);
+
+       
+
+        let snake = [{ x: Math.floor(gridWidth / 2) * box, y: Math.floor(gridHeight / 2) * box }];
+        let food
+
+        let direction = null;
+        generateFood()
+        // 添加窗口大小改变的监听
+        window.addEventListener('resize', () => {
+        
+            direction = null
+            // 确保蛇和食物在新的范围内
+            snake = snake.map(segment => ({
+                x: Math.min(segment.x, (gridWidth - 1) * box),
+                y: Math.min(segment.y, (gridHeight - 1) * box)
+            }));
+            generateFood();
+            startDraw();
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'ArrowUp' && direction !== 'DOWN') {
+                direction = 'UP'
+                draw();
+            };
+            if (event.key === 'ArrowDown' && direction !== 'UP') {
+                direction = 'DOWN';
+                draw();
+            };
+            if (event.key === 'ArrowLeft' && direction !== 'RIGHT') {
+                direction = 'LEFT';
+                draw();
+            };
+            if (event.key === 'ArrowRight' && direction !== 'LEFT') {
+                direction = 'RIGHT';
+                draw();
+            };
+        });
+
+        function draw() {
+            if (drawProcess) {
+                return
+
+            }
+            drawProcess = true
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x, food.y, box, box);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? 'green' : 'lightgreen';
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            let head = { ...snake[0] };
+
+            // 只有当有方向时才移动蛇头
+            if (direction) {
+                if (direction === 'UP') head.y -= box;
+                if (direction === 'DOWN') head.y += box;
+                if (direction === 'LEFT') head.x -= box;
+                if (direction === 'RIGHT') head.x += box;
+
+                // 检查碰撞
+                if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+                    clearInterval(drawInterval);
+                    alert('Game Over!');
+                    restartGame();
+                    drawProcess = false
+                    return;
+                }
+
+                if (head.x === food.x && head.y === food.y) {
+                    defaultSpeed -= 100
+                    generateFood();
+                    startDraw();
+                } else {
+                    snake.pop();
+                }
+
+                snake.unshift(head);
+            }
+            drawProcess = false
+        }
+
+        function generateFood() {
+            do {
+                food = {
+                    x: Math.floor(Math.random() * gridWidth) * box, y: Math.floor(Math.random() * gridHeight) * box
+                };
+            }
+            while (snake.some(seg => seg.x === food.x && seg.y === food.y) && isPointWithinBoundary(food.x, food.y, 50));
+
+        }
+        function isPointWithinBoundary(x, y, margin) {
+            return (
+                x >= margin &&                // 距离左边框
+                x <= canvas.width - margin &&  // 距离右边框
+                y >= margin &&                // 距离上边框
+                y <= canvas.height - margin    // 距离下边框
+            );
+        }
+        function startDraw() {
+            if (drawInterval) {
+                clearInterval(drawInterval);
+            }
+            drawInterval = setInterval(draw, defaultSpeed);
+        }
+        function restartGame() {
+            clearInterval(drawInterval);
+            defaultSpeed = 500
+            snake = [{ x: Math.floor(gridWidth / 2) * box, y: Math.floor(gridHeight / 2) * box }];
+            food = { x: Math.floor(Math.random() * gridWidth) * box, y: Math.floor(Math.random() * gridHeight) * box };
+            direction = null;
+            startDraw();
+        }
+        function pauseGame() {
+            if (drawInterval) {
+                clearInterval(drawInterval);
+                drawInterval = null;
+            }
+        }
+        function startGame() {
+            if (!drawInterval) {
+                startDraw();
+            }
+        }
+
+    </script>
+</body>
+</html>

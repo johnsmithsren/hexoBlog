@@ -8,7 +8,11 @@ menu:
   归档: /archives/ || fas fa-archive
 
 # 网站图标
-favicon: /img/favicon.png
+favicon: /images/favicon.ico
+
+# 头像设置
+avatar:
+  img: /images/ice.jpg
 
 # 代码块设置
 highlight_theme: mac light
@@ -16,8 +20,8 @@ highlight_copy: true
 highlight_lang: true
 highlight_shrink: false
 highlight_height_limit: 200
-default_top_img: /renjmBlog.github.io/images/young.png
-background: /renjmBlog.github.io/images/roam.jpg
+default_top_img: /renjmBlog.github.io/images/roam.jpg
+# background: /renjmBlog.github.io/images/roam.jpg
 # 社交图标
 social:
   fab fa-github: https://github.com/johnsmithsren || Github
@@ -41,7 +45,7 @@ aside:
     category: true
   card_author:
     enable: true
-    description: '生活就像青春恋爱物语，总是充满了意外'
+    description: "生活就像青春恋爱物语，总是充满了意外"
     button:
       enable: true
       icon: fab fa-github
@@ -74,7 +78,7 @@ footer:
   owner:
     enable: true
     since: 2020
-  custom_text: 
+  custom_text:
   copyright: true
 
 # 动画效果
@@ -93,7 +97,6 @@ darkmode:
 preloader:
   enable: true
   source: 1
-
 # CDN 设置
 # CDN:
 #   option:

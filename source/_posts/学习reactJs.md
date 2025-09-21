@@ -1,5 +1,5 @@
 ---
-layout: post
+
 title: React Hooks 学习笔记
 date: 2024-12-12 16:07:42
 categories:
@@ -8,7 +8,7 @@ tags:
   - React
   - JavaScript
   - Hooks
-cover: /images/react.png
+cover: https://johnsmithsren.github.io/renjmBlog.github.io/images/react.png
 ---
 
 ## 引言

@@ -1,0 +1,68 @@
+name: Deploy Hexo Blog
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BLOG }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: |
+          npm ci
+          npm install hexo-cli hexo-deployer-git
+
+      - name: Configure Git
+        env:
+          GITHUB_TOKEN: ${{ secrets.BLOG }}
+        run: |
+          git config --global user.name 'johnsmithsren'
+          git config --global user.email 'rjm1149104294@outlook.com'
+          git config --global url."https://oauth2:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Build Hexo Site
+        run: |
+          npx hexo clean
+          npx hexo generate
+
+      - name: Deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.BLOG }}
+        run: |
+          npx hexo deploy || {
+            echo "Deployment failed"
+            exit 1
+          }
+
+      - name: Notify Deployment Status
+        if: success()
+        run: echo "🚀 Deployment successful!"
+
+      - name: Error Logging
+        if: failure()
+        run: |
+          echo "❌ Deployment failed"
+          echo "Git Configuration:"
+          git config --list
+          echo "Repository Remote:"
+          git remote -v
